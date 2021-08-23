@@ -1,0 +1,130 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Jul 18 20:25:40 2021
+
+@author:            Manasa Pothana
+Functionality:      This program uses classes and methods to create and
+                    print stock portfolio of an investor
+"""
+import pandas as pd
+
+
+class Investor:
+    
+    def __init__(self, firstName, lastName, investorID):
+        self.investorID             =   investorID
+        self.firstName              =   firstName
+        self.lastName               =   lastName
+        self.stock                  =   []
+        self.bond                   =   []
+        
+        return 
+    
+    def investor_stock_purchase(self, symbol, numShares, purchasePrice,
+                                currentPrice, purchaseDate):
+        self.stock.append(Stock(symbol, numShares, purchasePrice, currentPrice,
+                                purchaseDate))
+        return 
+            
+    def investor_bond_purchase(self, symbol, numShares, purchasePrice, 
+                               currentPrice, purchaseDate, _yield, coupon ):
+        self.bond.append(Bonds(symbol, numShares, purchasePrice, currentPrice,
+                               purchaseDate, _yield, coupon))
+             
+    def print_investor_portfolio_perfromance(self):
+            
+        stkPerfList = []
+        bndPerfList = []
+        
+        for stk in self.stock:
+            stkPerfList.append(stk.stock_performance())
+            
+        stkPerfOut = pd.DataFrame(stkPerfList, columns=['Stock', 'Quantity',
+                                                       'Gain/Loss','Yearly Rate'])
+        
+        for bnd in self.bond:
+            bndPerfList.append(bnd.bond_performance())
+        
+        bndPerfOut = pd.DataFrame(bndPerfList, columns=['Bond', 'Quantity',
+                                                        'Gain/Loss','Yearly Rate',
+                                                        'Yield', 'Coupon'])
+        stkFileName = self.firstName + self.lastName + 'StockPortfolio' +'.csv'
+        bndFileName = self.firstName + self.lastName + 'BondPortfolio' +'.csv'
+        
+        stkPerfOut.to_csv(stkFileName, index = False)
+        bndPerfOut.to_csv(bndFileName, index = False)
+
+        
+class Stock:
+    
+    def __init__(self, symbol, numShares, purchasePrice, currentPrice, purchaseDate):
+        self.symbol         = symbol
+        self.numShares      = numShares
+        self.purchasePrice  = purchasePrice
+        self.currentPrice   = currentPrice
+        self.purchaseDate   = purchaseDate
+    
+    def stock_performance(self):
+        stockPerformance    = []
+        currentDate         = pd.to_datetime('today')
+        gainLoss            = round(((self.currentPrice - self.purchasePrice) *
+                                    self.numShares),2)
+        holdDays            = (currentDate - self.purchaseDate).days
+        yearly_rate         = "{:.2%}".format(
+                                (((self.currentPrice - self.purchasePrice)
+                                 /self.purchasePrice)/holdDays) * 100
+                                )
+        stockPerformance    = [self.symbol, self.numShares, gainLoss,
+                               yearly_rate
+                               ]
+        return stockPerformance
+
+class Bonds(Stock):
+    
+    def __init__(self, symbol, numShares, purchasePrice, currentPrice,
+                 purchaseDate, coupon, _yield):
+        super().__init__(symbol, numShares, purchasePrice, 
+                         currentPrice, purchaseDate)
+        self._yield = _yield
+        self.Coupon = coupon
+        
+    def bond_performance(self):
+        bondPerformance    = []        
+        currentDate         = pd.to_datetime('today')
+        gainLoss            = round(((self.currentPrice - self.purchasePrice) *
+                                    self.numShares),2)
+        holdDays            = (currentDate - self.purchaseDate).days
+        yearly_rate         = "{:.2%}".format(
+                                (((self.currentPrice - self.purchasePrice)
+                                 /self.purchasePrice)/holdDays) * 100
+                                )
+        bondPerformance    = [self.symbol, self.numShares, gainLoss,
+                               yearly_rate, self._yield, self.Coupon
+                               ]
+        return bondPerformance
+                
+#Add investor details
+bobSmith = Investor('Bob', 'Smith', 'inv_1001')
+dateCol = ['PURCHASE_DATE']
+
+df = pd.read_csv(
+     "C:\Manasa MS\ICT 4370 Phyton Programming\Week 6\Lesson6_Data_Stocks.csv",
+     parse_dates=dateCol)
+
+df1 = pd.read_csv(
+     "C:\Manasa MS\ICT 4370 Phyton Programming\Week 6\Lesson6_Data_Bonds.csv",
+     parse_dates=dateCol)
+
+
+for index, row in df.iterrows():
+        bobSmith.investor_stock_purchase(row['SYMBOL'], row['NO_SHARES'],
+                                         row['PURCHASE_PRICE'], row['CURRENT_VALUE'],
+                                         row['PURCHASE_DATE'])
+
+for index, row in df1.iterrows():
+    bobSmith.investor_bond_purchase(row['SYMBOL'], row['NO_SHARES'],
+                                    row['PURCHASE_PRICE'],row['CURRENT_VALUE'],
+                                    row['PURCHASE_DATE'], row['Coupon'], 
+                                    row['Yield'])
+
+bobSmith.print_investor_portfolio_perfromance()
